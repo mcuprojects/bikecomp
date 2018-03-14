@@ -11,8 +11,8 @@
 static Screen screen = SCREEN_END;
 
 static Param paramTop = PARAM_SPEED;
-static Param paramMid = PARAM_TRACK;
-static Param paramBtm = PARAM_SPEED_AVG;
+static Param paramMid = PARAM_TRACK_DISTANCE;
+static Param paramBtm = PARAM_TOTAL_DISTANCE;
 
 static char strTop[PARAM_STRBUF];
 static char strMid[PARAM_STRBUF];
@@ -57,11 +57,17 @@ static const ParamArea areaSetupBtm PROGMEM = {
 static const LcdText textMainTop_5_1 PROGMEM = {
     10, 29, 5, 1, ' ',
 };
+static const LcdText textMainTop_5 PROGMEM = {
+    10, 29, 3, 0, ' ',
+};
 static const LcdText textParam_7_2 PROGMEM = {
     19, 36, 7, 2, ' ',
 };
 static const LcdText textParam_7_1 PROGMEM = {
     1, 36, 7, 1, ' ',
+};
+static const LcdText textParam_7 PROGMEM = {
+    1, 36, 5, 0, ' ',
 };
 
 static const LcdTimeText textTime PROGMEM = {
@@ -76,12 +82,12 @@ static const LcdText textParam_5 PROGMEM = {
     55, 36, 4, 0, ' ',
 };
 
-const char speedLabel[] PROGMEM = "Current speed";
+const char speedLabel[] PROGMEM = "SPEED";
 static const ParamData speedParam PROGMEM = {
     LCD_COLOR_AQUA, speedLabel,
 };
 
-const char trackLabel[] PROGMEM = "Track length";
+const char trackLabel[] PROGMEM = "TRACK";
 static const ParamData trackParam PROGMEM = {
     LCD_COLOR_YELLOW, trackLabel,
 };
@@ -101,7 +107,7 @@ static const ParamData cadenceParam PROGMEM = {
     LCD_COLOR_CHARTREUSE, cadenceLabel,
 };
 
-const char distanceLabel[] PROGMEM = "Total distance";
+const char distanceLabel[] PROGMEM = "TOTAL";
 static const ParamData distanceParam PROGMEM = {
     LCD_COLOR_LIGHT_CORAL, distanceLabel,
 };
@@ -239,7 +245,8 @@ static void updateParam(const ParamData *paramPgm, const LcdText *lcdTextPgm, in
     glcdLoadLcdFont(area.fontMain, paramColor, bgColor);
     glcdSetXY(text.x, area.top + text.y);
 
-    for (uint8_t i = 0; i < text.len; i++) {
+    uint8_t i;
+    for (i = 0; i < text.len; i++) {
         if (text.dot && i == text.len - text.dot - 1) {
             glcdLoadLcdFont(area.fontDeci, paramColor, bgColor);
             glcdSetY(area.top + text.y + pgm_read_byte(&area.fontMain[1]) - pgm_read_byte(
@@ -291,12 +298,8 @@ static void updateSection(Section section, ClearMode clear)
 
     switch (param) {
     case PARAM_SPEED:
-        value = value * 36 / 10 / 100;      // mm/s => 0.1km/h
-        updateParam(&speedParam, &textMainTop_5_1, value, section, clear);
-        break;
-    case PARAM_TRACK:
-        value = value / 1000 / 10;          // mm => 0.01km
-        updateParam(&trackParam, &textParam_7_2, value, section, clear);
+        value = value * 36 / 10 / 1000;      // mm/s => km/h
+        updateParam(&speedParam, &textMainTop_5, value, section, clear);
         break;
     case PARAM_TRACK_TIME:                  // sec
         updateTime(&trackTimeParam, &textTime, value, section, clear);
@@ -308,9 +311,13 @@ static void updateSection(Section section, ClearMode clear)
     case PARAM_CADENCE:
         updateParam(&cadenceParam, &textParam_7_1, value, section, clear);
         break;
-    case PARAM_DISTANCE:
-        value = value / 100;                // m => 0.1km
-        updateParam(&distanceParam, &textParam_7_1, value, section, clear);
+    case PARAM_TOTAL_DISTANCE:
+        value = value / 1000;                // m => km
+        updateParam(&distanceParam, &textParam_7, value, section, clear);
+        break;
+    case PARAM_TRACK_DISTANCE:
+        value = value / 100;          // m => 0.1km
+        updateParam(&trackParam, &textParam_7_1, value, section, clear);
         break;
     case PARAM_SETUP_AUTO_OFF:
         value = 30 * (measureGetAutoOff() + 1);
@@ -342,12 +349,12 @@ static void screenDiffColorMode(int8_t value)
 
 void screenInit(void)
 {
-    paramMid = eeprom_read_byte((uint8_t *)EEPROM_PARAM_MID);
-    if (paramMid >= PARAM_END)
-        switchParam(SECTION_MAIN_MID);
-    paramBtm = eeprom_read_byte((uint8_t *)EEPROM_PARAM_BTM);
-    if (paramBtm >= PARAM_END)
-        switchParam(SECTION_MAIN_BTM);
+//    paramMid = eeprom_read_byte((uint8_t *)EEPROM_PARAM_MID);
+//    if (paramMid >= PARAM_END)
+//        switchParam(SECTION_MAIN_MID);
+//    paramBtm = eeprom_read_byte((uint8_t *)EEPROM_PARAM_BTM);
+//    if (paramBtm >= PARAM_END)
+//        switchParam(SECTION_MAIN_BTM);
     colorMode = eeprom_read_byte((uint8_t *)EEPROM_COLOR_MODE);
     if (colorMode >= COLOR_MODE_END)
         colorMode = COLOR_MODE_FULL_COLOR;
@@ -358,18 +365,18 @@ void switchParam(Section section)
     switch (section) {
     case SECTION_MAIN_MID:
         if (++paramMid >= PARAM_END)
-            paramMid = PARAM_TRACK;
+            paramMid = PARAM_TRACK_DISTANCE;
         if (paramMid == paramBtm)
             if (++paramMid >= PARAM_END)
-                paramMid = PARAM_TRACK;
+                paramMid = PARAM_TRACK_DISTANCE;
         eeprom_update_byte((uint8_t *)EEPROM_PARAM_MID, paramMid);
         break;
     case SECTION_MAIN_BTM:
         if (++paramBtm >= PARAM_END)
-            paramBtm = PARAM_TRACK;
+            paramBtm = PARAM_TRACK_DISTANCE;
         if (paramBtm == paramMid)
             if (++paramBtm >= PARAM_END)
-                paramBtm = PARAM_TRACK;
+                paramBtm = PARAM_TRACK_DISTANCE;
         eeprom_update_byte((uint8_t *)EEPROM_PARAM_BTM, paramBtm);
         break;
     default:

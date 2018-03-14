@@ -19,13 +19,17 @@ void hwInit()
 
     // Setup sleep mode
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    PCMSK2 |= (BUTTON_1_LINE | BUTTON_2_LINE | BUTTON_3_LINE);
+
+    // Shutdown detection
+    PCICR |= 1<<PCIE2;
+    PCMSK2 |= (BUTTON_1_LINE | BUTTON_2_LINE | BUTTON_3_LINE | SENSOR_SHUTDOWN_LINE);
 
     // Interrupts
     TIMSK0 |= (1 << OCIE0A);    // Input timer compare
     TIMSK1 |= (1 << TOIE1);     // Measure timer overflow
     EIMSK |= (1 << INT0);       // Wheel sensor
     EIMSK |= (1 << INT1);       // Pedal sensor
+    EIMSK |= (1 << PCINT23);    // Shutdown sensor
     sei();
 
     return;
@@ -37,7 +41,7 @@ void sleep(void)
     glcdSleep();
     TIMSK0 &= ~(1 << OCIE0A);   // Input timer compare disable
     TIMSK1 &= ~(1 << TOIE1);    // Measure timer overflow disable
-    PCICR |= (1<<PCIE2);        // Buttons interrupt enable
+    PCICR |= (1<<PCIE2);        // Buttons interrupt enable + voltage drop sensor
 
     // Sleep
     sleep_mode();
@@ -59,10 +63,10 @@ int main(void)
         Screen screen = screenGet();
         uint8_t btnCmd = getBtnCmd();
 
-        if (measureGetSleepTimer() == 0) {
-            btnCmd = BTN_STATE_0;
-            sleep();
-        }
+//        if (measureGetSleepTimer() == 0) {
+//            btnCmd = BTN_STATE_0;
+//            sleep();
+//        }
 
         if (btnCmd)
             measureResetSleepTimer();
@@ -80,7 +84,8 @@ int main(void)
         case BTN_1:
             switch (screen) {
             case SCREEN_MAIN:
-                switchParam(SECTION_MAIN_MID);
+                //switchParam(SECTION_MAIN_MID);
+                measureResetCurrent();
                 break;
             case SCREEN_SETUP:
                 diffParamSetup(-1);
@@ -92,7 +97,8 @@ int main(void)
         case BTN_2:
             switch (screen) {
             case SCREEN_MAIN:
-                switchParam(SECTION_MAIN_BTM);
+                //switchParam(SECTION_MAIN_BTM);
+                measureResetCurrent();
                 break;
             case SCREEN_SETUP:
                 diffParamSetup(+1);
@@ -116,7 +122,8 @@ int main(void)
         case BTN_1_LONG:
             switch (screen) {
             case SCREEN_MAIN:
-                measurePauseCurrent();
+                //measurePauseCurrent();
+                switchParam(SECTION_MAIN_MID);
                 break;
             case SCREEN_SETUP:
                 diffParamSetup(-10);
@@ -128,7 +135,8 @@ int main(void)
         case BTN_2_LONG:
             switch (screen) {
             case SCREEN_MAIN:
-                measureResetCurrent();
+                //measureResetCurrent();
+                switchParam(SECTION_MAIN_BTM);
                 break;
             case SCREEN_SETUP:
                 diffParamSetup(+10);

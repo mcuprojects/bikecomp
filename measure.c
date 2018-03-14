@@ -26,6 +26,7 @@ static uint8_t autoOff = 0;
 
 // Data saved in eeprom
 static int32_t totalDistance;
+static int32_t trackDistance;
 static uint16_t wheelLength;
 
 static int32_t getCurrentTrack(void)
@@ -40,7 +41,10 @@ static int32_t getCurrentTrack(void)
 void measureInit(void)
 {
     // Load data from EEPROM
-    totalDistance = eeprom_read_dword((uint32_t *)EEPROM_DISTANCE);
+    totalDistance = eeprom_read_dword((uint32_t *)EEPROM_TOTAL_DISTANCE);
+    trackDistance = eeprom_read_dword((uint32_t *)EEPROM_TRACK_DISTANCE);
+    //totalDistance = 0;
+    //trackDistance = 0;
 
     wheelLength = eeprom_read_word((uint16_t *)EEPROM_WHEEL);
     if (wheelLength > WHEEL_MAX_LENGTH)
@@ -111,7 +115,17 @@ ISR(INT1_vect)
 }
 
 ISR (PCINT2_vect) {
-    sleepTimer = SLEEP_TIMER * (autoOff + 1);
+    //inPause = 0;
+    if ((getCurrentTrack() / 1000) > 0) {
+        totalDistance += getCurrentTrack() / 1000;
+        trackDistance += getCurrentTrack() / 1000;
+        wheelTurns = 0;
+        pedalTurns = 0;
+        trackTime = 0;
+
+        eeprom_update_dword((uint32_t *)EEPROM_TOTAL_DISTANCE, totalDistance);
+        eeprom_update_dword((uint32_t *)EEPROM_TRACK_DISTANCE, trackDistance);
+    }
 }
 
 void measureIncTime(void)
@@ -157,11 +171,13 @@ void measureResetCurrent(void)
 {
     inPause = 0;
     totalDistance += getCurrentTrack() / 1000;
+    trackDistance = 0;
     wheelTurns = 0;
     pedalTurns = 0;
     trackTime = 0;
 
-    eeprom_update_dword((uint32_t *)EEPROM_DISTANCE, totalDistance);
+    eeprom_update_dword((uint32_t *)EEPROM_TOTAL_DISTANCE, totalDistance);
+    eeprom_update_dword((uint32_t *)EEPROM_TRACK_DISTANCE, trackDistance);
 }
 
 int32_t measureGetValue(Param param)
@@ -177,9 +193,6 @@ int32_t measureGetValue(Param param)
         } else {
             ret = 0;
         }
-        break;
-    case PARAM_TRACK:
-        ret = getCurrentTrack();
         break;
     case PARAM_TRACK_TIME:
         ret = trackTime / TIME_STEP_FREQ;
@@ -200,8 +213,11 @@ int32_t measureGetValue(Param param)
             ret = 0;
         }
         break;
-    case PARAM_DISTANCE:
+    case PARAM_TOTAL_DISTANCE:
         ret = getCurrentTrack() / 1000 + totalDistance;
+        break;
+    case PARAM_TRACK_DISTANCE:
+        ret = getCurrentTrack() / 1000 + trackDistance;
         break;
     case PARAM_SETUP_WHEEL:
         ret = wheelLength;

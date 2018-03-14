@@ -8,6 +8,7 @@
 #define EEPROM_AUTO_OFF         0x0A
 
 #define EEPROM_WHEEL            0x10
-#define EEPROM_DISTANCE         0x12
+#define EEPROM_TOTAL_DISTANCE   0x12
+#define EEPROM_TRACK_DISTANCE   0x16
 
 #endif // EEPROM_H4

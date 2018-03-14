@@ -212,7 +212,8 @@ void glcdWriteLcdChar(uint8_t code)
         const uint8_t *digStart = glcdOpts.font + 7 * (glcdOpts.fp.thickness * 2 + 1);
         uint8_t startLine = pgm_read_byte(digStart++);
         uint8_t point1, point2;
-        for (uint8_t line = 0; line < glcdOpts.fp.thickness; line++) {
+        uint8_t line;
+        for (line = 0; line < glcdOpts.fp.thickness; line++) {
             point1 = pgm_read_byte(digStart++);
             point2 = pgm_read_byte(digStart++);
             if (code == '.') {
@@ -232,12 +233,14 @@ void glcdWriteLcdChar(uint8_t code)
         return;
     }
 
-    for (uint8_t seg = 0; seg < 7; seg++) {
+    uint8_t seg;
+    for (seg = 0; seg < 7; seg++) {
         segColor = code & (1 << seg) ? glcdOpts.fp.color : glcdOpts.fp.bgColor;
         const uint8_t *digStart = glcdOpts.font + seg * (glcdOpts.fp.thickness * 2 + 1);
         uint8_t startLine = pgm_read_byte(digStart++);
         uint8_t point1, point2;
-        for (uint8_t line = 0; line < glcdOpts.fp.thickness; line++) {
+        uint8_t line;
+        for (line = 0; line < glcdOpts.fp.thickness; line++) {
             point1 = pgm_read_byte(digStart++);
             point2 = pgm_read_byte(digStart++);
             if (dirMask & (1 << seg)) {
