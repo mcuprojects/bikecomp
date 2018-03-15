@@ -29,8 +29,8 @@ OBJDUMP  = avr-objdump
 # AVRDude parameters
 AVRDUDE  = avrdude
 AD_MCU   = -p $(MCU)
-#AD_PROG = -c stk500v2
-#AD_PORT = -P avrdoper
+AD_PROG = -c usbasp
+AD_PORT = -P usbasp
 
 AD_CMD   = $(AD_MCU) $(AD_PROG) $(AD_PORT) -V
 

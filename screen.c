@@ -30,12 +30,12 @@ static const ParamArea areaMainTop PROGMEM = {
 static const ParamArea areaMainMid PROGMEM = {
     0, 120, 239, 219,
     2, 7,
-    font_lcd_63, font_lcd_36,
+    font_lcd_45, font_lcd_36,
 };
 static const ParamArea areaMainBtm PROGMEM = {
     0, 220, 239, 319,
     2, 7,
-    font_lcd_63, font_lcd_36,
+    font_lcd_45, font_lcd_36,
 };
 
 static const ParamArea areaSetupTop PROGMEM = {
@@ -64,10 +64,10 @@ static const LcdText textParam_7_2 PROGMEM = {
     19, 36, 7, 2, ' ',
 };
 static const LcdText textParam_7_1 PROGMEM = {
-    1, 36, 7, 1, ' ',
+    52, 46, 7, 1, ' ',
 };
 static const LcdText textParam_7 PROGMEM = {
-    1, 36, 5, 0, ' ',
+    22, 46, 7, 0, ' ',
 };
 
 static const LcdTimeText textTime PROGMEM = {
